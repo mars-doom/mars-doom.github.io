@@ -365,7 +365,6 @@ def page(title, body, depth=0, description=""):
 <header class="topbar">
   <a class="wordmark" href="{up}index.html">Doo<span>M</span></a>
   <nav>
-    <a href="{up}index.html#about">About</a>
     <a href="{up}index.html#projects">Projects</a>
     <a href="{up}index.html#start">Start a project</a>
     <a href="https://github.com/{ORG}">GitHub</a>
@@ -396,37 +395,13 @@ def hub(projects):
     makers = {c["login"] for p in projects for c in p.get("contributors", [])}
     return page("DooM · Mars College Department of Makers", f"""
 <section class="hero">
-  <h1 class="eyebrow mono">Mars College · Department of Makers</h1>
-  <p class="lede">DooM is the makers' department at Mars College. Every project here is
-  open hardware: a repo with the design, the parts list, the build log and the
-  mistakes, published so the next person starts further along.</p>
+  <h1 class="eyebrow mono">Mars College · Department of Makers Project Hub</h1>
+  <p class="lede">Welcome to the Department of Makers at Mars College. The Department
+  of Makers is a field laboratory for improvised civilization.</p>
   <div class="stats mono">
     <span><b>{sum(1 for p in projects if not p.get("example"))}</b> projects</span>
     <span><b>{len(makers)}</b> makers</span>
     <span><b>2027</b> season</span>
-  </div>
-</section>
-
-<section id="about" class="about">
-  <div>
-    <h2>What is Mars?</h2>
-    <p><span class="todo">[Placeholder copy]</span> Mars College is a seasonal, off-grid
-    educational community in the California desert. For a few months each year people
-    live, learn and build together with solar power, hauled water and whatever the
-    desert allows.</p>
-  </div>
-  <div>
-    <h2>What is DooM?</h2>
-    <p>The Department of Makers is where the building happens: shelters, showers, water,
-    power, tools. Makers-in-residence each take on a project and document it from the
-    first sketch to the finished build, using a shared template so every project reads
-    the same way.</p>
-  </div>
-  <div>
-    <h2>Why open?</h2>
-    <p>Off-grid problems repeat everywhere. A shower pod that works at Mars should work at
-    a farm, a festival or a disaster site. Hardware is CERN-OHL-W, docs are CC BY-SA:
-    copy it, change it, share what you learn.</p>
   </div>
 </section>
 
@@ -442,9 +417,6 @@ def hub(projects):
 
 <section id="start" class="start">
   <h2>Start a project</h2>
-  <p>Every project starts from the DooM template: a ready-made repo with a docs site, a
-  parts list, a build log and a printable PDF. Make yours, fill in the pages, and it
-  shows up here on the next build.</p>
   <a class="button" href="https://github.com/new?template_owner={ORG}&template_name=doom-template&owner={ORG}">Use the template</a>
   <a class="button ghost" href="https://github.com/{ORG}/doom-template/blob/main/START-HERE.md">Read START-HERE</a>
 </section>
