@@ -1,0 +1,49 @@
+# Builds the hub from the org's project repos and publishes it with GitHub Pages.
+# Runs on every push here, every night, on demand (Actions tab > Run workflow),
+# and when a project repo sends a "project-updated" dispatch.
+name: Publish hub
+
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: "0 9 * * *"   # daily, 9:00 UTC
+  workflow_dispatch:
+  repository_dispatch:
+    types: [project-updated]
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Build site
+        run: python build.py
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
