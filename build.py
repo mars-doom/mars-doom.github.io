@@ -395,7 +395,7 @@ def hub(projects):
     makers = {c["login"] for p in projects for c in p.get("contributors", [])}
     return page("DooM · Mars College Department of Makers", f"""
 <section class="hero">
-  <h1 class="eyebrow mono">Mars College · Department of Makers Project Hub</h1>
+  <h1 class="eyebrow mono">Mars College · <a href="https://dom.mars.college/">Department of Makers</a> Project Hub</h1>
   <div class="stats mono">
     <span><b>{sum(1 for p in projects if not p.get("example"))}</b> projects</span>
     <span><b>{len(makers)}</b> makers</span>
