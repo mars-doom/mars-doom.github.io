@@ -1,6 +1,6 @@
 """
 Builds the DooM hub: a static site that lists every project repo in the
-mars-doom GitHub org and gives each one a summary page.
+mars-doom GitHub org and republishes each project's docs pages inside the hub.
 
     python build.py            # real repos only
     python build.py --demo     # plus a few example cards, to see a fuller gallery
@@ -13,12 +13,14 @@ import html
 import io
 import json
 import os
+import posixpath
 import re
 import shutil
 import sys
 import urllib.request
 from datetime import datetime
 from pathlib import Path
+from urllib.parse import quote
 
 ORG = "mars-doom"
 ROOT = Path(__file__).resolve().parent
@@ -28,6 +30,19 @@ RAW = "https://raw.githubusercontent.com"
 
 # Repos that are never projects, even though they live in the org.
 SKIP = {".github", "doom-template", f"{ORG}.github.io"}
+
+# Words in the parts list's cost column that mean "cost nothing" (as tools/makers.py).
+FREE_WORDS = {"free", "salvaged", "salvage", "scavenged", "gifted", "donated",
+              "found", "reused", "scrap", "repurposed"}
+HEADER_LABELS = {"qty": "Qty", "cost_each": "Cost each", "item": "Item",
+                 "details": "Details", "source": "Source", "notes": "Notes"}
+
+# MkDocs admonition types, as the GitHub alert that looks most like each.
+ALERTS = {"note": "NOTE", "info": "NOTE", "abstract": "NOTE", "summary": "NOTE",
+          "tip": "TIP", "hint": "TIP", "success": "TIP", "example": "TIP",
+          "important": "IMPORTANT", "question": "IMPORTANT",
+          "warning": "WARNING", "caution": "WARNING", "attention": "WARNING",
+          "danger": "CAUTION", "error": "CAUTION", "failure": "CAUTION", "bug": "CAUTION"}
 
 
 # ---- Fetching -------------------------------------------------------------
@@ -49,62 +64,249 @@ def get(url, data=None, raw=False):
 
 
 def repo_file(repo, path):
-    return get(f"{RAW}/{ORG}/{repo['name']}/{repo['default_branch']}/{path}", raw=True)
+    return get(f"{RAW}/{ORG}/{repo['name']}/{repo['default_branch']}/{quote(path)}", raw=True)
 
 
 def render_markdown(text, repo):
     """GitHub renders the markdown, so it looks just like the repo does."""
+    if not text.strip():
+        return ""
     return get(f"{API}/markdown", {"text": text, "mode": "gfm",
                                    "context": repo["full_name"]}, raw=True)
 
 
-# ---- Reading a project ----------------------------------------------------
+# ---- Turning MkDocs pages into hub pages ----------------------------------
 
 def strip_front_matter(md):
-    return re.sub(r"\A---\n.*?\n---\n", "", md or "", flags=re.S)
+    return re.sub(r"\A---[ \t]*\n.*?\n---[ \t]*\n", "", md or "", count=1, flags=re.S)
 
 
-def fix_links(md, repo):
-    """Point relative images at the raw files and relative .md links at the docs site."""
-    raw = f"{RAW}/{ORG}/{repo['name']}/{repo['default_branch']}/docs/"
-    md = re.sub(r"!\[([^\]]*)\]\((?!https?:)([^)]+)\)", lambda m: f"![{m[1]}]({raw}{m[2]})", md)
-    md = re.sub(r"(?<!!)\[([^\]]*)\]\((?!https?:)([^)#]+)\.md\)",
-                lambda m: f"[{m[1]}]({docs_url(repo)}{m[2]}/)", md)
-    return md
+def strip_comments(md):
+    return re.sub(r"<!--.*?-->", "", md, flags=re.S)
 
 
-def docs_url(repo):
-    return repo["homepage"] or f"https://{ORG}.github.io/{repo['name']}/"
+def page_slug(path):
+    """docs/how-it-works.md -> how-it-works; docs/index.md -> index."""
+    return re.sub(r"\.md$", "", path).replace("/", "-")
 
+
+def fix_links(md, repo, pages):
+    """Rewrite the relative links in a page that lives in docs/.
+
+    Images load from the raw repo, links to other doc pages stay inside the hub,
+    and links to anything else in the repo (files/, parts.csv) open on GitHub.
+    """
+    raw = f"{RAW}/{ORG}/{repo['name']}/{repo['default_branch']}/"
+    blob = f"{repo['html_url']}/blob/{repo['default_branch']}/"
+
+    def link(m):
+        bang, text, target, title = m[1], m[2], m[3], m[4] or ""
+        if re.match(r"[a-z]+:|#|/", target):
+            return m[0]
+        path, _, anchor = target.partition("#")
+        path = posixpath.normpath(posixpath.join("docs", path))
+        if bang:
+            url = raw + quote(path)
+        elif path.endswith(".md") and path.startswith("docs/") and page_slug(path[5:]) in pages:
+            url = f"{page_slug(path[5:])}.html"
+        else:
+            url = blob + quote(path)
+        return f"{bang}[{text}]({url}{'#' + anchor if anchor else ''}{title})"
+
+    return re.sub(r"(!?)\[([^\]]*)\]\(([^)\s]+)(\s+\"[^\"]*\")?\)", link, md)
+
+
+def admonitions(md):
+    """MkDocs `!!! warning "Title"` blocks become GitHub alerts."""
+    def alert(m):
+        kind = ALERTS.get(m[1].lower(), "NOTE")
+        body = re.sub(r"^ {4}", "", m[3], flags=re.M).strip("\n")
+        lines = ([f"**{m[2]}**"] if m[2] else []) + body.split("\n")
+        return f"> [!{kind}]\n" + "\n".join(f"> {l}".rstrip() for l in lines) + "\n\n"
+    return re.sub(r"^[!?]{3}\+? *(\w+)(?: +\"([^\"]*)\")?[^\n]*\n((?:(?: {4}.*)?\n)*)", alert, md, flags=re.M)
+
+
+def strip_attr_lists(md):
+    """Drop MkDocs `{ width=300 }` / `{ #id .class }` attributes GitHub would print."""
+    return re.sub(r"\{:? *(?:[#.][\w-]+|\w+=[^}\n]*)[^}\n]*\}", "", md)
+
+
+def heading_ids(rendered):
+    """GitHub's renderer leaves headings without ids; add them, slugged the way
+    MkDocs does, so #links written for the docs site land in the same place."""
+    def add(m):
+        text = html.unescape(re.sub(r"<[^>]+>", "", m[3]))
+        slug = re.sub(r"[-\s]+", "-", re.sub(r"[^\w\s-]", "", text).strip().lower())
+        return f'<h{m[1]} id="{slug}"{m[2]}>{m[3]}</h{m[1]}>'
+    return re.sub(r"<h([1-6])((?: [^>]*)?)>(.*?)</h\1>", add, rendered, flags=re.S)
+
+
+def render_page(md, repo, pages, context):
+    """One docs page, MkDocs-isms and all, to finished HTML."""
+    md = strip_comments(strip_front_matter(md))
+    md = md.replace("{{ parts_list }}", parts_markdown(context["parts"]))
+    md = md.replace("{{ files_list }}", files_markdown(context["files"], repo))
+    md = strip_attr_lists(admonitions(md))
+    md = fix_links(md, repo, pages)
+
+    # Mermaid goes around GitHub's renderer, which wraps it in GitHub-only markup.
+    diagrams = []
+    def stash(m):
+        diagrams.append(m[1])
+        return f"\n\nMERMAID{len(diagrams) - 1}\n\n"
+    md = re.sub(r"^```mermaid[^\n]*\n(.*?)^```[ \t]*$", stash, md, flags=re.M | re.S)
+
+    out = heading_ids(render_markdown(md, repo))
+    for i, src in enumerate(diagrams):
+        out = re.sub(rf"<p[^>]*>MERMAID{i}</p>", f'<pre class="mermaid">{html.escape(src)}</pre>', out)
+    return out
+
+
+# ---- Parts and files lists (as tools/makers.py builds them) ---------------
+
+def _cost(value):
+    v = (value or "").strip().lower()
+    if not v:
+        return None
+    if v in FREE_WORDS:
+        return 0.0
+    try:
+        return float(v.replace("$", "").replace(",", ""))
+    except ValueError:
+        return None
+
+
+def _qty(value):
+    try:
+        return float((value or "").strip() or "1")
+    except ValueError:
+        return 1.0
+
+
+def read_parts(text):
+    rows = [r for r in csv.reader(io.StringIO((text or "").lstrip("\ufeff"))) if any(c.strip() for c in r)]
+    if len(rows) < 2:
+        return [], []
+    header = [h.strip() for h in rows[0]]
+    return header, [(r + [""] * len(header))[:len(header)] for r in rows[1:]]
+
+
+def parts_total(header, rows):
+    keys = [h.lower() for h in header]
+    if "cost_each" not in keys:
+        return 0.0
+    ci, qi = keys.index("cost_each"), keys.index("qty") if "qty" in keys else None
+    return sum((_cost(r[ci]) or 0) * (_qty(r[qi]) if qi is not None else 1) for r in rows)
+
+
+def parts_markdown(parts):
+    header, body = parts
+    if not body:
+        return "*No parts listed yet.*"
+    keys = [h.lower() for h in header]
+    keep = [i for i, k in enumerate(keys) if k == "section" or any(r[i].strip() for r in body)]
+    header, body = [header[i] for i in keep], [[r[i] for i in keep] for r in body]
+    keys = [h.lower() for h in header]
+
+    sections = {}
+    if "section" in keys:
+        si = keys.index("section")
+        for r in body:
+            sections.setdefault(r[si].strip() or "Other", []).append([c for i, c in enumerate(r) if i != si])
+        header = [h for i, h in enumerate(header) if i != si]
+    else:
+        sections[""] = body
+    keys = [h.lower() for h in header]
+
+    def cell(key, value):
+        value = value.replace("|", "\\|").replace("\n", " ").strip()
+        n = _cost(value) if key == "cost_each" else None
+        return f"${n:,.2f}" if n else value
+
+    out = []
+    for name, rows in sections.items():
+        if name and not (len(sections) == 1 and name == "Other"):
+            out += [f"### {name}", ""]
+        out += ["| " + " | ".join(HEADER_LABELS.get(k, h.replace("_", " ").capitalize()) for k, h in zip(keys, header)) + " |",
+                "|" + "|".join(" --- " for _ in keys) + "|"]
+        out += ["| " + " | ".join(cell(k, c) for k, c in zip(keys, r)) + " |" for r in rows]
+        out.append("")
+    total = parts_total(header, [r for rows in sections.values() for r in rows])
+    if total:
+        out.append(f"**Total: ${total:,.2f}**")
+    return "\n".join(out)
+
+
+def _size(n):
+    for unit in ("bytes", "KB", "MB", "GB"):
+        if n < 1024 or unit == "GB":
+            return f"{n:.0f} {unit}" if unit == "bytes" else f"{n:.1f} {unit}"
+        n /= 1024
+
+
+def files_markdown(files, repo):
+    if not files:
+        return "*No design files yet.*"
+    blob = f"{repo['html_url']}/blob/{repo['default_branch']}/"
+    return "\n".join(f"- [{f['path'][6:]}]({blob}{quote(f['path'])}) · {_size(f['size'])}" for f in files)
+
+
+# ---- Reading a project ----------------------------------------------------
 
 def field(md, name):
     m = re.search(rf"\*\*{name}:\*\*\s*(.+)", md)
     return m[1].strip() if m else None
 
 
+def nav_pages(mkdocs, tree):
+    """The docs pages in menu order: mkdocs.yml's nav, else every .md in docs/."""
+    block = re.search(r"^nav:[ \t]*\n((?:[ \t]+.*\n?|\n)+)", mkdocs, re.M)
+    found = re.findall(r"^\s*-\s*(?:['\"]?([^:'\"\n]+)['\"]?\s*:\s*)?([\w./-]+\.md)\s*$", block[1], re.M) if block else []
+    if found:
+        return [(title.strip() or None, file) for title, file in found]
+    files = sorted(t["path"][5:] for t in tree if t["path"].startswith("docs/") and t["path"].endswith(".md"))
+    return [(None, f) for f in sorted(files, key=lambda f: f != "index.md")]
+
+
 def read_project(repo):
-    index = strip_front_matter(repo_file(repo, "docs/index.md"))
-    log = strip_front_matter(repo_file(repo, "docs/log.md"))
+    branch = repo["default_branch"]
+    tree = (get(f"{API}/repos/{repo['full_name']}/git/trees/{branch}?recursive=1") or {}).get("tree", [])
     mkdocs = repo_file(repo, "mkdocs.yml") or ""
-    parts = repo_file(repo, "parts.csv") or ""
+    parts = read_parts(repo_file(repo, "parts.csv"))
+    files = [t for t in tree if t["type"] == "blob" and t["path"].startswith("files/")
+             and not any(p.startswith(".") for p in t["path"].split("/"))
+             and posixpath.basename(t["path"]).lower() != "readme.md"]
+    context = {"parts": parts, "files": files}
+
+    nav = nav_pages(mkdocs, tree)
+    slugs = {page_slug(f) for _, f in nav}
+    sources = {f: strip_front_matter(repo_file(repo, f"docs/{f}") or "") for _, f in nav}
+    index = sources.get("index.md", "")
 
     title = re.search(r"^site_name:\s*(.+)$", mkdocs, re.M)
     h1 = re.search(r"^# (.+)$", index, re.M)
-    hero = re.search(r"!\[[^\]]*\]\(([^)]+)\)", index)
+    hero = re.search(r"!\[[^\]]*\]\(([^)\s]+)", index)
     author = re.search(r"^site_author:\s*(.+)$", mkdocs, re.M)
 
-    # The summary page shows the index without what the header already shows.
-    body = index
-    for pattern in (r"^# .+\n", r"!\[[^\]]*\]\([^)]+\)\n", r"\*\*Status:\*\*.*\n",
-                    r"\*\*Maker:\*\*.*\n", r"## Pages\n(?:\n|- .*\n)*"):
-        body = re.sub(pattern, "", body, count=1, flags=re.M)
+    pages = []
+    for nav_title, f in nav:
+        md = sources[f]
+        if f == "index.md":
+            # The summary page shows the index without what the header already shows.
+            for pattern in (r"^# .+\n", r"!\[[^\]]*\]\([^)]+\)\n", r"\*\*Status:\*\*.*\n",
+                            r"\*\*Maker:\*\*.*\n", r"## Pages\n(?:\n|- .*\n)*"):
+                md = re.sub(pattern, "", md, count=1, flags=re.M)
+        page_h1 = re.search(r"^# (.+)$", md, re.M)
+        pages.append({
+            "slug": page_slug(f),
+            "file": f,
+            "title": "Summary" if f == "index.md" else (nav_title or (page_h1[1].strip() if page_h1 else page_slug(f))),
+            "html": render_page(md, repo, slugs, context),
+        })
 
     # Newest log entry: the first ### heading and everything up to the next one.
+    log = strip_comments(sources.get("log.md", ""))
     entry = re.search(r"^### (.+?)\n(.*?)(?=^### |\Z)", log, re.M | re.S)
-
-    rows = list(csv.DictReader(io.StringIO(parts)))
-    cost = sum(float(re.sub(r"[^\d.]", "", r.get("cost_each") or "") or 0) *
-               float(r.get("qty") or 1) for r in rows)
 
     contributors = get(f"{API}/repos/{repo['full_name']}/contributors") or []
 
@@ -114,18 +316,19 @@ def read_project(repo):
         "description": repo["description"] or "",
         "status": field(index, "Status"),
         "maker": field(index, "Maker") or (author[1].strip() if author else None),
-        "hero": f"{RAW}/{ORG}/{repo['name']}/{repo['default_branch']}/docs/{hero[1]}"
-                if hero and not hero[1].startswith("http") else (hero[1] if hero else None),
-        "summary_html": render_markdown(fix_links(body, repo), repo),
+        "hero": hero and (hero[1] if hero[1].startswith("http")
+                          else f"{RAW}/{ORG}/{repo['name']}/{branch}/{posixpath.normpath('docs/' + hero[1])}"),
+        "pages": pages,
         "log_title": entry[1].strip() if entry else None,
-        "log_html": render_markdown(fix_links(entry[2], repo), repo) if entry else None,
-        "parts_count": len(rows),
-        "parts_cost": cost,
+        "log_html": render_page(entry[2], repo, slugs, context) if entry else None,
+        "parts_count": len(parts[1]),
+        "parts_cost": parts_total(*parts),
+        "files_count": len(files),
         "contributors": [{"login": c["login"], "avatar": c["avatar_url"], "url": c["html_url"]}
                          for c in contributors if c.get("type") == "User"],
         "updated": repo["pushed_at"][:10],
         "repo_url": repo["html_url"],
-        "docs_url": docs_url(repo),
+        "edit_url": f"{repo['html_url']}/edit/{branch}/docs/",
         "issues_url": repo["html_url"] + "/issues",
         "license": (repo.get("license") or {}).get("spdx_id"),
     }
@@ -138,8 +341,15 @@ def is_project(repo):
 
 # ---- Pages ----------------------------------------------------------------
 
+MERMAID = """<script type="module">
+import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.esm.min.mjs';
+mermaid.initialize({ startOnLoad: true, theme: matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'default' });
+</script>"""
+
+
 def page(title, body, depth=0, description=""):
     up = "../" * depth
+    script = MERMAID if 'class="mermaid"' in body else ""
     return f"""<!doctype html>
 <html lang="en">
 <head>
@@ -166,6 +376,7 @@ def page(title, body, depth=0, description=""):
   <p>Mars College Department of Makers · Hardware CERN-OHL-W-2.0 · Docs and photos CC BY-SA 4.0</p>
   <p class="mono">Built {datetime.now():%Y-%m-%d} from <a href="https://github.com/{ORG}">github.com/{ORG}</a></p>
 </footer>
+{script}
 </body>
 </html>
 """
@@ -180,7 +391,7 @@ def card(p, link):
 
 
 def hub(projects):
-    cards = "\n".join(card(p, f"projects/{p['slug']}.html" if not p.get("example") else "#projects")
+    cards = "\n".join(card(p, f"projects/{p['slug']}/index.html" if not p.get("example") else "#projects")
                       for p in projects)
     makers = {c["login"] for p in projects for c in p.get("contributors", [])}
     return page("DooM · Mars College Department of Makers", f"""
@@ -241,22 +452,32 @@ def hub(projects):
 """, description="Open hardware projects from the Mars College Department of Makers.")
 
 
-def project_page(p):
+def tabs(p, current):
+    here = ' aria-current="page"'
+    links = "".join(
+        f'<a href="{pg["slug"]}.html"{here if pg["slug"] == current else ""}>{html.escape(pg["title"])}</a>'
+        for pg in p["pages"])
+    return f'<nav class="tabs" aria-label="Project pages">{links}</nav>'
+
+
+def project_summary(p, pg):
     e = html.escape
     hero = f'<img class="project-hero" src="{e(p["hero"])}" alt="">' if p["hero"] else ""
     people = "".join(f'<a href="{e(c["url"])}" title="{e(c["login"])}"><img src="{e(c["avatar"])}&s=80" alt="{e(c["login"])}"></a>'
                      for c in p["contributors"])
     cost = f"${p['parts_cost']:,.0f}" if p["parts_cost"] else "not costed yet"
+    build = next((x for x in p["pages"] if x["file"].startswith("build")), None)
+    has_log = any(x["slug"] == "log" for x in p["pages"])
     log = f"""
     <section class="panel">
       <h2>Latest from the log</h2>
       <p class="mono muted">{e(p["log_title"])}</p>
       <div class="prose clamp">{p["log_html"]}</div>
-      <a href="{e(p["docs_url"])}log/">Read the full log →</a>
+      {'<a href="log.html">Read the full log →</a>' if has_log else ""}
     </section>""" if p["log_html"] else ""
     return page(f"{p['name']} · DooM", f"""
 <main class="project">
-  <p class="crumbs mono"><a href="../index.html#projects">Projects</a> / {e(p["slug"])}</p>
+  <p class="crumbs mono"><a href="../../index.html#projects">Projects</a> / {e(p["slug"])}</p>
   <div class="project-head">
     <div>
       {f'<span class="chip">{e(p["status"])}</span>' if p["status"] else ""}
@@ -264,21 +485,22 @@ def project_page(p):
       <p class="lede">{e(p["description"])}</p>
       <p class="muted">{e(p["maker"] or "")}</p>
       <div class="actions">
-        <a class="button" href="{e(p["docs_url"])}">Full project docs</a>
+        {f'<a class="button" href="{build["slug"]}.html">Build it yourself</a>' if build else ""}
         <a class="button ghost" href="{e(p["repo_url"])}">Repository</a>
-        <a class="button ghost" href="{e(p["docs_url"])}build-it/">Build it</a>
       </div>
     </div>
     {hero}
   </div>
+  {tabs(p, pg["slug"])}
 
   <div class="project-body">
-    <article class="prose">{p["summary_html"]}</article>
+    <article class="prose">{pg["html"]}</article>
     <aside>
       <section class="panel facts mono">
         <div><span>Updated</span><b>{e(p["updated"])}</b></div>
         <div><span>Parts</span><b>{p["parts_count"]} line items</b></div>
         <div><span>Est. cost</span><b>{cost}</b></div>
+        <div><span>Design files</span><b>{p["files_count"]}</b></div>
         <div><span>License</span><b>{e(p["license"] or "—")}</b></div>
       </section>
       <section class="panel">
@@ -290,7 +512,43 @@ def project_page(p):
     </aside>
   </div>
 </main>
-""", depth=1, description=p["description"])
+""", depth=2, description=p["description"])
+
+
+def project_doc(p, pg):
+    """Any docs page other than the summary: the page itself plus an outline."""
+    e = html.escape
+    outline = re.findall(r'<h2 id="([^"]*)"[^>]*>(.*?)</h2>', pg["html"], re.S)
+    toc = "".join(f'<li><a href="#{i}">{re.sub(r"<[^>]+>", "", t)}</a></li>' for i, t in outline)
+    return page(f"{pg['title']} · {p['name']} · DooM", f"""
+<main class="project">
+  <p class="crumbs mono"><a href="../../index.html#projects">Projects</a> / <a href="index.html">{e(p["slug"])}</a> / {e(pg["slug"])}</p>
+  <div class="project-head compact">
+    <div>
+      {f'<span class="chip">{e(p["status"])}</span>' if p["status"] else ""}
+      <p class="project-name"><a href="index.html">{e(p["name"])}</a></p>
+    </div>
+  </div>
+  {tabs(p, pg["slug"])}
+
+  <div class="project-body">
+    <article class="prose doc">{pg["html"] or '<p class="muted">Nothing on this page yet.</p>'}</article>
+    <aside>
+      {f'<section class="panel toc"><h2>On this page</h2><ul>{toc}</ul></section>' if toc else ""}
+      <section class="panel">
+        <h2>Help improve this page</h2>
+        <p class="muted small">These pages come straight from the project's repo.</p>
+        <a href="{e(p["edit_url"])}{e(pg["file"])}">Edit on GitHub →</a><br>
+        <a href="{e(p["issues_url"])}/new/choose">Send a build report or problem →</a>
+      </section>
+    </aside>
+  </div>
+</main>
+""", depth=2, description=p["description"])
+
+
+def redirect(to):
+    return f'<!doctype html><meta charset="utf-8"><meta http-equiv="refresh" content="0; url={to}"><link rel="canonical" href="{to}"><a href="{to}">Moved here</a>'
 
 
 # ---- Example cards (--demo) -----------------------------------------------
@@ -322,10 +580,20 @@ def main():
     shutil.copytree(ROOT / "assets", OUT / "assets")
     (OUT / "index.html").write_text(hub(projects), encoding="utf-8")
     for p in projects:
-        if not p.get("example"):
-            (OUT / "projects" / f"{p['slug']}.html").write_text(project_page(p), encoding="utf-8")
+        if p.get("example"):
+            continue
+        folder = OUT / "projects" / p["slug"]
+        folder.mkdir()
+        for pg in p["pages"]:
+            render = project_summary if pg["slug"] == "index" else project_doc
+            (folder / f"{pg['slug']}.html").write_text(render(p, pg), encoding="utf-8")
+        if not (folder / "index.html").exists():
+            (folder / "index.html").write_text(project_summary(p, {"slug": "index", "html": ""}), encoding="utf-8")
+        # The first version of the hub linked to projects/<slug>.html.
+        (OUT / "projects" / f"{p['slug']}.html").write_text(redirect(f"{p['slug']}/index.html"), encoding="utf-8")
     (OUT / "projects.json").write_text(json.dumps(
-        [{k: v for k, v in p.items() if not k.endswith("_html")} for p in projects], indent=2), encoding="utf-8")
+        [{k: v for k, v in p.items() if k not in ("pages", "log_html")} |
+         {"pages": [pg["title"] for pg in p.get("pages", [])]} for p in projects], indent=2), encoding="utf-8")
     print(f"wrote {len(projects)} cards to {OUT}")
 
 

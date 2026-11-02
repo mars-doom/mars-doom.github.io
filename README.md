@@ -3,9 +3,17 @@
 The front page for the Mars College Department of Makers: https://mars-doom.github.io/
 
 It lists every project repo in the [mars-doom](https://github.com/mars-doom) org
-and gives each one a summary page that links to its full docs site. Nothing here
-is edited by hand per project: the pages are built from each repo's
-`docs/index.md`, `docs/log.md`, `mkdocs.yml` and `parts.csv`.
+and republishes each project's docs pages inside the hub, one tab per page in the
+order of the repo's `mkdocs.yml` nav. Nothing here is edited by hand per project:
+the pages are built from each repo's `docs/*.md`, `mkdocs.yml`, `parts.csv` and
+`files/` folder.
+
+GitHub renders the markdown. Before that, `build.py` handles the MkDocs parts
+GitHub doesn't know: it fills in `{{ parts_list }}` and `{{ files_list }}` the
+way `tools/makers.py` does, turns `!!! warning` admonitions into GitHub alerts,
+drops `{ width=... }` attributes, and draws ```` ```mermaid ```` diagrams with
+mermaid.js. Links between doc pages stay in the hub; links to anything else in
+the repo open on GitHub.
 
 ## How it updates
 
