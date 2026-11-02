@@ -396,8 +396,7 @@ def hub(projects):
     makers = {c["login"] for p in projects for c in p.get("contributors", [])}
     return page("DooM · Mars College Department of Makers", f"""
 <section class="hero">
-  <p class="eyebrow mono">Mars College · Department of Makers</p>
-  <h1>Build it in the desert.<br>Write it down so anyone can build it again.</h1>
+  <h1 class="eyebrow mono">Mars College · Department of Makers</h1>
   <p class="lede">DooM is the makers' department at Mars College. Every project here is
   open hardware: a repo with the design, the parts list, the build log and the
   mistakes, published so the next person starts further along.</p>
