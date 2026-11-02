@@ -15,6 +15,13 @@ drops `{ width=... }` attributes, and draws ```` ```mermaid ```` diagrams with
 mermaid.js. Links between doc pages stay in the hub; links to anything else in
 the repo open on GitHub.
 
+## Shrink photos
+
+`/shrink/` is a phone page that shrinks photos before they're uploaded to a
+project: pick photos, save the small JPEG copies to the camera roll, upload
+those in Pages CMS. It runs entirely in the browser (`assets/shrink.js`), so
+nothing is uploaded anywhere, and re-encoding drops the photos' location data.
+
 ## How it updates
 
 `.github/workflows/publish-hub.yml` runs `build.py` and publishes `site/` with

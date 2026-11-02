@@ -367,6 +367,7 @@ def page(title, body, depth=0, description=""):
   <nav>
     <a href="{up}index.html#projects">Projects</a>
     <a href="{up}index.html#start">Start a project</a>
+    <a href="{up}shrink/index.html">Shrink photos</a>
     <a href="https://github.com/{ORG}">GitHub</a>
   </nav>
 </header>
@@ -510,6 +511,43 @@ def project_doc(p, pg):
 """, depth=2, description=p["description"])
 
 
+def shrink_page():
+    """A phone-friendly page that shrinks photos before they're uploaded to a repo."""
+    return page("Shrink photos · DooM", """
+<main class="project shrink">
+  <h1>Shrink photos</h1>
+  <p class="lede">Make phone photos small enough for your project page. Your originals
+  aren't touched, and nothing is uploaded: it all happens on your phone.</p>
+
+  <ol class="steps">
+    <li><b>Pick photos.</b> As many as you like.</li>
+    <li><b>Save the small copies.</b> They go to your camera roll next to the originals.</li>
+    <li><b>Upload those</b> to your project in Pages CMS, under Media.</li>
+  </ol>
+
+  <div class="picker">
+    <label class="button" for="pick">Choose photos</label>
+    <input id="pick" type="file" accept="image/*" multiple>
+    <label class="size mono">Size
+      <select id="size">
+        <option value="2000" selected>Standard · 2000 px</option>
+        <option value="1200">Small · 1200 px</option>
+      </select>
+    </label>
+  </div>
+
+  <div id="actions" class="actions-bar" hidden>
+    <span id="summary" class="mono muted"></span>
+    <button id="save-all" class="button" type="button">Save all</button>
+  </div>
+  <ul id="results" class="results"></ul>
+
+  <p class="muted small">Photos come out as JPEGs, with location and camera details removed.</p>
+</main>
+<script src="../assets/shrink.js"></script>
+""", depth=1, description="Shrink phone photos before uploading them to a DooM project.")
+
+
 def redirect(to):
     return f'<!doctype html><meta charset="utf-8"><meta http-equiv="refresh" content="0; url={to}"><link rel="canonical" href="{to}"><a href="{to}">Moved here</a>'
 
@@ -542,6 +580,8 @@ def main():
     (OUT / "projects").mkdir(parents=True)
     shutil.copytree(ROOT / "assets", OUT / "assets")
     (OUT / "index.html").write_text(hub(projects), encoding="utf-8")
+    (OUT / "shrink").mkdir()
+    (OUT / "shrink" / "index.html").write_text(shrink_page(), encoding="utf-8")
     for p in projects:
         if p.get("example"):
             continue
