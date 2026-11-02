@@ -232,6 +232,18 @@ aside { display: flex; flex-direction: column; gap: 1rem; min-width: 0; }
 .toc a:hover { color: var(--accent-text); }
 @media (min-width: 52rem) { .doc + aside .toc { position: sticky; top: 1rem; } }
 
+/* ---- Maker guide ---- */
+.guide > h1 { font-size: clamp(2.25rem, 5vw, 3.25rem); font-weight: 800; margin: 1rem 0 0.5rem; }
+.guide > .lede { margin-top: 0; }
+.guide .project-body { padding-top: 1.5rem; border-top: 1px solid var(--border); }
+.guide .prose h2 { margin-top: 2.75rem; padding-top: 0.5rem; }
+.guide .prose h2:first-child { margin-top: 0; }
+.guide .prose ol, .guide .prose ul { padding-left: 1.25rem; }
+.guide .prose pre { white-space: pre-wrap; overflow-wrap: anywhere; }
+.prose th, .prose td { overflow-wrap: normal; }
+/* On a phone the outline comes first, as a jump list, instead of after the whole guide. */
+@media (max-width: 52rem) { .guide aside { order: -1; } }
+
 /* ---- Shrink photos ---- */
 .shrink { max-width: 40rem; }
 .shrink h1 { font-size: clamp(2rem, 6vw, 2.75rem); font-weight: 800; margin: 1rem 0 0.5rem; }

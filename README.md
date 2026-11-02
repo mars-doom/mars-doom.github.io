@@ -15,6 +15,12 @@ drops `{ width=... }` attributes, and draws ```` ```mermaid ```` diagrams with
 mermaid.js. Links between doc pages stay in the hub; links to anything else in
 the repo open on GitHub.
 
+## Maker guide
+
+`/guide/` explains to makers how to add to their project: Pages CMS on a phone,
+photos, videos, design files, then GitHub Desktop and an AI agent on a computer.
+Its text is in `content/guide.html`; edit that file and push to update the page.
+
 ## Shrink photos
 
 `/shrink/` is a phone page that shrinks photos before they're uploaded to a

@@ -367,6 +367,7 @@ def page(title, body, depth=0, description=""):
   <nav>
     <a href="{up}index.html#projects">Projects</a>
     <a href="{up}index.html#start">Start a project</a>
+    <a href="{up}guide/index.html">Guide</a>
     <a href="{up}shrink/index.html">Shrink photos</a>
     <a href="https://github.com/{ORG}">GitHub</a>
   </nav>
@@ -582,6 +583,10 @@ def main():
     (OUT / "index.html").write_text(hub(projects), encoding="utf-8")
     (OUT / "shrink").mkdir()
     (OUT / "shrink" / "index.html").write_text(shrink_page(), encoding="utf-8")
+    (OUT / "guide").mkdir()
+    (OUT / "guide" / "index.html").write_text(page(
+        "Maker guide · DooM", (ROOT / "content" / "guide.html").read_text(encoding="utf-8"), depth=1,
+        description="How to add text, photos, videos and design files to a DooM project."), encoding="utf-8")
     for p in projects:
         if p.get("example"):
             continue

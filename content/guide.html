@@ -1,0 +1,234 @@
+<!-- The Guide page body. build.py wraps it in the site header and footer. -->
+<main class="project guide">
+  <p class="crumbs mono"><a href="../index.html">Hub</a> / guide</p>
+  <h1>Maker guide</h1>
+  <p class="lede">How to get your project onto its page: from your phone in a few minutes,
+  then from a computer and an AI agent when you want more.</p>
+
+  <div class="project-body">
+    <article class="prose doc">
+
+      <h2 id="how-it-fits">How it fits together</h2>
+      <p>Your project lives in its own GitHub repo, <code>github.com/mars-doom/your-project</code>.
+      Everything you add there shows up in two places a few minutes later:</p>
+      <ul>
+        <li><b>Your docs site:</b> <code>mars-doom.github.io/your-project/</code></li>
+        <li><b>The hub:</b> your card and pages on <a href="../index.html">mars-doom.github.io</a>,
+        refreshed every night.</li>
+      </ul>
+      <p>Your repo has four pages to fill in:</p>
+      <table>
+        <thead><tr><th>Page</th><th>What goes in it</th></tr></thead>
+        <tbody>
+          <tr><td><b>Summary</b></td><td>Your best photo and a few sentences: what it is, who it's for.</td></tr>
+          <tr><td><b>Log</b></td><td>Short dated entries as you go. Photos, notes, what broke.</td></tr>
+          <tr><td><b>Design</b></td><td>How it works, a diagram, your parts list and design files.</td></tr>
+          <tr><td><b>Build it</b></td><td>Steps for someone who wants to make their own.</td></tr>
+        </tbody>
+      </table>
+      <p><b>Done looks like:</b> a photo and a few sentences, a log with a start and an end,
+      a diagram with a parts list, and the main steps to build one.</p>
+
+      <h2 id="phone">1. On your phone: Pages CMS</h2>
+      <p>Pages CMS is a website that edits your repo like a normal app: typing, photos, Save.
+      No installs, no Git.</p>
+
+      <h3 id="get-access">Get access (once)</h3>
+      <ol>
+        <li><b>Make a GitHub account</b> at <a href="https://github.com/signup">github.com/signup</a> if you don't have one.</li>
+        <li><b>Send your GitHub username to a DooM lead.</b> They'll add you to your project repo.</li>
+        <li><b>Accept the invite</b> from the email GitHub sends you.</li>
+      </ol>
+
+      <h3 id="open">Open your project</h3>
+      <ol>
+        <li>Go to <a href="https://app.pagescms.org">app.pagescms.org</a> and tap <b>Sign in with GitHub</b>.</li>
+        <li>Pick <b>mars-doom</b>, then your project.</li>
+        <li>Add it to your home screen so it opens like an app:
+          iPhone: Share → <b>Add to Home Screen</b>. Android: ⋮ → <b>Add to Home screen</b>.</li>
+      </ol>
+      <div class="markdown-alert markdown-alert-note"><p class="markdown-alert-title">If it asks to approve Pages CMS</p>
+      <p>The first time anyone in mars-doom uses it, GitHub may ask for the Pages CMS app to be approved
+      for the organization. Ask a DooM lead: an org owner approves it once, for everyone.</p></div>
+
+      <h3 id="menu">What's in the menu</h3>
+      <ul>
+        <li><b>Summary, Log, Design, Build it:</b> your four pages.</li>
+        <li><b>Parts list:</b> a table. Only <i>item</i> and <i>qty</i> are required. In
+        <i>cost_each</i> type a number, or a word like <code>salvaged</code> or <code>free</code>.
+        Use <i>section</i> to group parts to match your diagram.</li>
+        <li><b>Media → Photos</b> and <b>Media → Files:</b> everything you've uploaded.</li>
+        <li><b>Setup:</b> site settings. Leave these alone unless you know what you're changing.</li>
+      </ul>
+
+      <h3 id="write">Write and save</h3>
+      <ol>
+        <li>Tap a page and type. The toolbar does bold, lists and headings.</li>
+        <li>Tap <b>Save</b>. Your docs site updates a minute or two later.</li>
+      </ol>
+      <div class="markdown-alert markdown-alert-warning"><p class="markdown-alert-title">Two things to leave alone</p>
+      <p><b>Page title:</b> never leave it empty, or Pages CMS can't reopen the page.<br>
+      <b>Hidden prompts:</b> some pages have grey questions to get you going. They never show on
+      your site, so you can leave them or delete them.</p></div>
+
+      <h3 id="log">Writing a log entry</h3>
+      <p>Put new entries at the top, under a heading with the date and a few words:</p>
+      <pre><code>### 2026-11-02 · First water test</code></pre>
+      <p>Then a few lines and a photo or two. Write it the same day: it's very hard to remember later,
+      and these notes become your Build it page at the end.</p>
+
+      <h2 id="photos">2. Photos</h2>
+      <p>Phone photos are too big for the website (3–8 MB each). Shrink them first. Your originals
+      stay full size on your phone.</p>
+      <ol>
+        <li>Open <a href="../shrink/index.html">Shrink photos</a> on your phone. Add it to your home screen too.</li>
+        <li>Tap <b>Choose photos</b>, pick as many as you like, then <b>Save all</b>. Small copies
+        (2000 px, about 300 KB) land in your camera roll next to the originals.</li>
+        <li>In Pages CMS, tap the image button in the toolbar where you want the photo, and pick the small copy.</li>
+      </ol>
+      <p>Shrinking also removes the photo's location, so you don't publish where you took it.</p>
+
+      <h3 id="good-photos">Photos that work</h3>
+      <ul>
+        <li><b>Summary photo:</b> the whole thing, in good light, held sideways (landscape).
+        It's also your card on the hub.</li>
+        <li><b>One photo per build step</b> on Build it. A photo of each step is a gift to whoever tries this next.</li>
+        <li><b>Diagrams:</b> a sketch on paper with the parts labelled, photographed, is perfect.</li>
+        <li>Describe what each photo shows. In the editor that's the image's alt text.</li>
+      </ul>
+
+      <h2 id="videos">3. Videos</h2>
+      <p><b>Don't upload video files to your repo.</b> They're too big: anything over 50 MB is
+      rejected, and smaller ones still slow the site down.</p>
+      <ol>
+        <li>Upload to <b>YouTube</b> (Unlisted is fine) or <b>Vimeo</b>.</li>
+        <li>Paste the link on its own line on your page, with a sentence saying what it shows.</li>
+        <li>Add a still photo from the video next to the link, so the page still makes sense if the video goes away.</li>
+      </ol>
+
+      <h2 id="files">4. Design files</h2>
+      <p>CAD, drawings, cut files, code and data go in the <code>files</code> folder.
+      Everything there is listed on your Design page automatically, with download links.</p>
+      <ul>
+        <li><b>From your phone:</b> Pages CMS → Media → <b>Files</b> → upload.</li>
+        <li><b>From a computer:</b> put them in <code>files/</code> in your repo (see below).</li>
+      </ul>
+      <p>Use folders so people can find things:</p>
+      <pre><code>files/
+  cad/           models: your source file + STEP
+  drawings/      PDFs, DXFs, sketches
+  print/         STL / 3MF for 3D printing
+  cut/           DXF / SVG for laser, CNC, plasma
+  code/          firmware, scripts (with a README)
+  data/          test results, spreadsheets</code></pre>
+      <p><b>Share two versions of each design:</b> the file you worked in, so others can edit it
+      (Fusion, FreeCAD, SolidWorks, KiCad…), and one anyone can open (STEP, DXF, STL, PDF).</p>
+      <p><b>Name files plainly:</b> <code>frame-v2.step</code>, not <code>Untitled (3) FINAL.f3d</code>.</p>
+      <p><b>Size:</b> files over 5 MB get a warning, files over 50 MB are rejected. Put big things
+      (scans, large models, datasets) on Zenodo or a shared drive and link to them from your Design page.</p>
+
+      <h2 id="computer">5. On a computer: GitHub Desktop</h2>
+      <p>A computer is better for long writing, lots of files, and working with an AI agent.
+      GitHub Desktop is the easiest way to get your repo onto it.</p>
+
+      <h3 id="setup">Set up (once)</h3>
+      <ol>
+        <li>Install <a href="https://desktop.github.com">GitHub Desktop</a> and sign in with your GitHub account.</li>
+        <li><b>File → Clone repository</b>, find <code>mars-doom/your-project</code>, choose a folder
+        (e.g. <code>Documents/GitHub</code>), and click <b>Clone</b>.</li>
+        <li>Install a text editor if you don't have one. <a href="https://code.visualstudio.com">VS Code</a> is free and shows a preview of your pages.</li>
+      </ol>
+
+      <h3 id="where-things-are">Where things are</h3>
+      <table>
+        <thead><tr><th>In your folder</th><th>What it is</th></tr></thead>
+        <tbody>
+          <tr><td><code>docs/index.md</code></td><td>Summary page</td></tr>
+          <tr><td><code>docs/log.md</code></td><td>Log</td></tr>
+          <tr><td><code>docs/design.md</code></td><td>Design</td></tr>
+          <tr><td><code>docs/build-it.md</code></td><td>Build it</td></tr>
+          <tr><td><code>docs/images/</code></td><td>Photos for your pages</td></tr>
+          <tr><td><code>parts.csv</code></td><td>Parts list (opens in any spreadsheet app)</td></tr>
+          <tr><td><code>files/</code></td><td>Design files</td></tr>
+          <tr><td><code>mkdocs.yml</code></td><td>Site settings and page menu</td></tr>
+        </tbody>
+      </table>
+      <p>Pages are Markdown: plain text where <code># Heading</code> makes a heading,
+      <code>- item</code> makes a list, and <code>![what it shows](images/photo.jpg)</code> adds a photo.</p>
+
+      <h3 id="daily">Every time you work</h3>
+      <ol>
+        <li><b>Pull first.</b> In GitHub Desktop click <b>Fetch origin</b>, then <b>Pull origin</b> if it offers.
+        This brings in anything you saved from your phone. Skipping it is the most common way to get stuck.</li>
+        <li>Edit files, add photos to <code>docs/images/</code> (shrink them first), add design files to <code>files/</code>.</li>
+        <li>In GitHub Desktop, check the list of changes, write a short summary (e.g. "Add frame build steps"),
+        click <b>Commit to main</b>, then <b>Push origin</b>.</li>
+      </ol>
+      <p>Your site updates a couple of minutes after you push.</p>
+      <div class="markdown-alert markdown-alert-tip"><p class="markdown-alert-title">Preview before you push (optional)</p>
+      <p>With Python installed, run <code>pip install -r requirements.txt</code> once in your repo folder,
+      then <code>mkdocs serve</code>, and open <code>http://localhost:8000</code>. It refreshes as you edit.</p></div>
+
+      <h2 id="ai">6. With your AI agent</h2>
+      <p>Once your repo is on your computer, an AI coding agent (Claude Code, Codex, Cursor and the like)
+      can do the tidy-up work: turning notes into log entries, drafting build steps, filling in the parts list.</p>
+
+      <h3 id="point-it">Point it at your repo</h3>
+      <ol>
+        <li>Open your project folder in the agent (the folder you cloned above).</li>
+        <li>Start with context:
+          <pre><code>This is my Mars College Dept of Makers project repo. Read README.md,
+mkdocs.yml and the pages in docs/ so you know how it's laid out.
+The site is built with MkDocs; parts.csv feeds the parts list.</code></pre></li>
+        <li>Then ask for something specific.</li>
+      </ol>
+
+      <h3 id="prompts">Things to ask it</h3>
+      <ul>
+        <li>"Here are my notes from today: … Turn them into a log entry at the top of <code>docs/log.md</code>, dated today."</li>
+        <li>"Using my log and the photos in <code>docs/images/</code>, draft the steps for <code>docs/build-it.md</code>.
+        Put a photo with each step and mark anything you're unsure of with TODO."</li>
+        <li>"Add these parts to <code>parts.csv</code>, in the Frame section: …"</li>
+        <li>"Write a short README for <code>files/code/</code> explaining how to flash this firmware."</li>
+        <li>"Run <code>mkdocs build --strict</code> and fix any broken links or images."</li>
+        <li>"Shrink any photos in <code>docs/images/</code> that are over 1 MB" (it can run <code>tools/resize_photos.py</code>).</li>
+      </ul>
+
+      <h3 id="ground-rules">Ground rules</h3>
+      <ul>
+        <li><b>Check its work before you push.</b> GitHub Desktop shows every line it changed. It's your project and your name on it.</li>
+        <li><b>Facts come from you.</b> Measurements, costs, what actually happened: an agent will happily invent plausible ones.</li>
+        <li><b>Keep it in your lane:</b> pages in <code>docs/</code>, <code>parts.csv</code> and <code>files/</code>.
+        Don't let it change <code>.github/</code>, <code>tools/</code>, <code>.pages.yml</code> or rename pages unless you mean to: the site and Pages CMS depend on them.</li>
+        <li><b>Pull before it starts</b>, so it isn't working on an old copy.</li>
+        <li><b>No secrets.</b> Never put passwords, API keys or Wi-Fi details in your repo; it's public.</li>
+      </ul>
+
+      <h2 id="help">Stuck?</h2>
+      <ul>
+        <li><b>Page won't open in Pages CMS:</b> its title is probably empty. Fix it from a computer, or ask a DooM lead.</li>
+        <li><b>Site didn't update:</b> on GitHub, open your repo's <b>Actions</b> tab. A red ✗ means the build failed; the
+        log usually names the file.</li>
+        <li><b>GitHub Desktop says your branch is behind or has conflicts:</b> you edited in two places at once. Ask for help
+        before forcing anything.</li>
+        <li>Anything else: ask a DooM lead.</li>
+      </ul>
+    </article>
+
+    <aside>
+      <section class="panel toc">
+        <h2>On this page</h2>
+        <ul>
+          <li><a href="#how-it-fits">How it fits together</a></li>
+          <li><a href="#phone">1. On your phone</a></li>
+          <li><a href="#photos">2. Photos</a></li>
+          <li><a href="#videos">3. Videos</a></li>
+          <li><a href="#files">4. Design files</a></li>
+          <li><a href="#computer">5. On a computer</a></li>
+          <li><a href="#ai">6. With your AI agent</a></li>
+          <li><a href="#help">Stuck?</a></li>
+        </ul>
+      </section>
+    </aside>
+  </div>
+</main>
