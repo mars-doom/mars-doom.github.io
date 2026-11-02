@@ -71,7 +71,7 @@ section, .project { max-width: var(--wide); margin: 0 auto; padding: 0 1rem; }
 .eyebrow { color: var(--accent-text); text-transform: uppercase; letter-spacing: 0.08em; margin: 0; font-weight: 500; line-height: 1.6; }
 .hero .lede { margin-top: 1rem; }
 .lede { font-size: 1.2rem; max-width: var(--measure); color: var(--muted); }
-.stats { display: flex; flex-wrap: wrap; gap: 0.5rem 2rem; margin-top: 2rem; color: var(--muted); }
+.stats { display: flex; flex-wrap: wrap; gap: 0.5rem 2rem; margin-top: 1.25rem; color: var(--muted); }
 .stats b { color: var(--text); font-size: 1.5rem; font-weight: 500; margin-right: 0.35rem; }
 
 .about {
