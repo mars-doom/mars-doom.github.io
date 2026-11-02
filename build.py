@@ -504,12 +504,6 @@ def project_doc(p, pg):
     <article class="prose doc">{pg["html"] or '<p class="muted">Nothing on this page yet.</p>'}</article>
     <aside>
       {f'<section class="panel toc"><h2>On this page</h2><ul>{toc}</ul></section>' if toc else ""}
-      <section class="panel">
-        <h2>Help improve this page</h2>
-        <p class="muted small">These pages come straight from the project's repo.</p>
-        <a href="{e(p["edit_url"])}{e(pg["file"])}">Edit on GitHub →</a><br>
-        <a href="{e(p["issues_url"])}/new/choose">Send a build report or problem →</a>
-      </section>
     </aside>
   </div>
 </main>
