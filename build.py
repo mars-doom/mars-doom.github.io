@@ -254,7 +254,7 @@ def files_markdown(files, repo):
 # ---- Reading a project ----------------------------------------------------
 
 def field(md, name):
-    m = re.search(rf"\*\*{name}:\*\*\s*(.+)", md)
+    m = re.search(rf"\*\*{name}:\*\*\s*(.+)", strip_comments(md))
     return m[1].strip() if m else None
 
 
