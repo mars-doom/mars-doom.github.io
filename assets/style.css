@@ -127,10 +127,6 @@ section, .project { max-width: var(--wide); margin: 0 auto; padding: 0 1rem; }
   font: 500 0.75rem/1.5 var(--font-mono); text-transform: uppercase; letter-spacing: 0.05em;
 }
 
-.start {
-  padding-top: 3rem; padding-bottom: 4rem; border-top: 1px solid var(--border);
-}
-.start p { max-width: var(--measure); color: var(--muted); }
 .button {
   display: inline-block; margin: 0.5rem 0.5rem 0 0; padding: 0.7rem 1.2rem;
   background: var(--accent); color: var(--on-accent); border: 1px solid var(--accent);

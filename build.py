@@ -366,7 +366,6 @@ def page(title, body, depth=0, description=""):
   <a class="wordmark" href="{up}index.html">Doo<span>M</span></a>
   <nav>
     <a href="{up}index.html#projects">Projects</a>
-    <a href="{up}index.html#start">Start a project</a>
     <a href="{up}guide/index.html">Guide</a>
     <a href="{up}shrink/index.html">Shrink photos</a>
     <a href="https://github.com/{ORG}">GitHub</a>
@@ -413,12 +412,6 @@ def hub(projects):
   <ul class="cards">
 {cards}
   </ul>
-</section>
-
-<section id="start" class="start">
-  <h2>Start a project</h2>
-  <a class="button" href="https://github.com/new?template_owner={ORG}&template_name=doom-template&owner={ORG}">Use the template</a>
-  <a class="button ghost" href="https://github.com/{ORG}/doom-template/blob/main/START-HERE.md">Read START-HERE</a>
 </section>
 """, description="Open hardware projects from the Mars College Department of Makers.")
 
