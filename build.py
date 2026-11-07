@@ -343,7 +343,12 @@ def is_project(repo):
 
 MERMAID = """<script type="module">
 import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.esm.min.mjs';
-mermaid.initialize({ startOnLoad: true, theme: matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'default' });
+const dark = matchMedia('(prefers-color-scheme: dark)').matches;
+mermaid.initialize({ startOnLoad: true, theme: 'base', themeVariables: {
+  fontFamily: 'Montserrat, sans-serif',
+  primaryColor: dark ? '#162829' : '#EEECE7', primaryTextColor: dark ? '#E8E3DA' : '#0F4C4F',
+  primaryBorderColor: dark ? '#8CC3BF' : '#0F4C4F', lineColor: dark ? '#E08A62' : '#B5552F',
+  secondaryColor: dark ? '#1D3334' : '#E6E3DC', tertiaryColor: dark ? '#0F1D1E' : '#F4F2EE' } });
 </script>"""
 
 
@@ -358,12 +363,13 @@ def page(title, body, depth=0, description=""):
 <title>{html.escape(title)}</title>
 <meta name="description" content="{html.escape(description)}">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;1,400&family=Montserrat:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="{up}assets/style.css">
 </head>
 <body>
 <header class="topbar">
-  <a class="wordmark" href="{up}index.html">Doo<span>M</span></a>
+  <a class="wordmark" href="{up}index.html" aria-label="DooM: Department of Makers, home">Department <i>of</i> <b>Makers</b></a>
   <nav>
     <a href="{up}index.html#projects">Projects</a>
     <a href="{up}guide/index.html">Guide</a>
@@ -373,8 +379,11 @@ def page(title, body, depth=0, description=""):
 </header>
 {body}
 <footer class="foot">
-  <p>Mars College Department of Makers · Hardware CERN-OHL-W-2.0 · Docs and photos CC BY-SA 4.0</p>
-  <p class="mono">Built {datetime.now():%Y-%m-%d} from <a href="https://github.com/{ORG}">github.com/{ORG}</a></p>
+  <span class="foot-mark" aria-hidden="true">DooM</span>
+  <div>
+    <p>Mars College Department of Makers · Hardware CERN-OHL-W-2.0 · Docs and photos CC BY-SA 4.0</p>
+    <p class="mono">Built {datetime.now():%Y-%m-%d} from <a href="https://github.com/{ORG}">github.com/{ORG}</a></p>
+  </div>
 </footer>
 {script}
 </body>
@@ -382,24 +391,32 @@ def page(title, body, depth=0, description=""):
 """
 
 
-def card(p, link):
-    img = f'<img src="{html.escape(p["hero"])}" alt="" loading="lazy" decoding="async">' if p.get("hero") else ""
-    status = f'<span class="chip">{html.escape(p["status"])}</span>' if p.get("status") else ""
-    who = f'<span class="who">{html.escape(p["maker_short"])}</span>' if p.get("maker_short") else ""
+def card(p, link, n):
+    e = html.escape
+    img = f'<img src="{e(p["hero"])}" alt="" loading="lazy" decoding="async">' if p.get("hero") else ""
+    status = f'<span class="chip">{e(p["status"])}</span>' if p.get("status") else ""
+    who = f'<span class="who">{e(p["maker_short"])}</span>' if p.get("maker_short") else ""
+    desc = f'<span class="desc">{e(p["description"])}</span>' if p.get("description") else ""
     cls = ' class="example"' if p.get("example") else ""
-    return f"""<li{cls}><a href="{link}">{img}{status}<span class="label"><span class="name">{html.escape(p["name"])}</span>{who}</span></a></li>"""
+    return (f'<li{cls}><a href="{link}"><span class="photo">{img}{status}</span>'
+            f'<span class="entry"><span class="num">{n:02d}</span><span class="text">'
+            f'<span class="name">{e(p["name"])}</span>{who}{desc}</span></span></a></li>')
 
 
 def hub(projects):
-    cards = "\n".join(card(p, f"projects/{p['slug']}/index.html" if not p.get("example") else "#projects")
-                      for p in projects)
+    cards = "\n".join(card(p, f"projects/{p['slug']}/index.html" if not p.get("example") else "#projects", i)
+                      for i, p in enumerate(projects, 1))
     makers = {c["login"] for p in projects for c in p.get("contributors", [])}
+    count = sum(1 for p in projects if not p.get("example"))
     return page("DooM · Mars College Department of Makers", f"""
 <section class="hero">
-  <h1 class="eyebrow mono">Mars College · <a href="https://dom.mars.college/">Department of Makers</a> Project Hub</h1>
-  <div class="stats mono">
-    <span><b>{sum(1 for p in projects if not p.get("example"))}</b> projects</span>
-    <span><b>{len(makers)}</b> makers</span>
+  <p class="eyebrow"><a href="https://dom.mars.college/">Mars College 2027</a></p>
+  <h1 class="display"><span class="numeral" aria-hidden="true">{count}</span><small>the</small>Projects</h1>
+  <p class="lede">Open hardware from the Department of Makers. Every project documents what it built,
+  what broke and how to make your own.</p>
+  <div class="stats">
+    <span><b>{count:02d}</b> projects</span>
+    <span><b>{len(makers):02d}</b> makers</span>
     <span><b>2027</b> season</span>
   </div>
 </section>
@@ -407,7 +424,7 @@ def hub(projects):
 <section id="projects" class="projects">
   <div class="section-head">
     <h2>Projects</h2>
-    <p class="mono muted">Pulled live from github.com/{ORG}</p>
+    <p class="label-caps muted">Pulled live from github.com/{ORG}</p>
   </div>
   <ul class="cards">
 {cards}
@@ -419,8 +436,8 @@ def hub(projects):
 def tabs(p, current):
     here = ' aria-current="page"'
     links = "".join(
-        f'<a href="{pg["slug"]}.html"{here if pg["slug"] == current else ""}>{html.escape(pg["title"])}</a>'
-        for pg in p["pages"])
+        f'<a href="{pg["slug"]}.html"{here if pg["slug"] == current else ""}><i>{i:02d}</i>{html.escape(pg["title"])}</a>'
+        for i, pg in enumerate(p["pages"], 1))
     return f'<nav class="tabs" aria-label="Project pages">{links}</nav>'
 
 
@@ -435,19 +452,19 @@ def project_summary(p, pg):
     log = f"""
     <section class="panel">
       <h2>Latest from the log</h2>
-      <p class="mono muted">{e(p["log_title"])}</p>
+      <p class="label-caps muted">{e(p["log_title"])}</p>
       <div class="prose clamp">{p["log_html"]}</div>
       {'<a href="log.html">Read the full log →</a>' if has_log else ""}
     </section>""" if p["log_html"] else ""
     return page(f"{p['name']} · DooM", f"""
 <main class="project">
-  <p class="crumbs mono"><a href="../../index.html#projects">Projects</a> / {e(p["slug"])}</p>
+  <p class="crumbs"><a href="../../index.html#projects">Projects</a> / {e(p["slug"])}</p>
   <div class="project-head">
     <div>
       {f'<span class="chip">{e(p["status"])}</span>' if p["status"] else ""}
       <h1>{e(p["name"])}</h1>
       <p class="lede">{e(p["description"])}</p>
-      <p class="muted">{e(p["maker"] or "")}</p>
+      <p class="maker">{e(p["maker"] or "")}</p>
       <div class="actions">
         {f'<a class="button" href="{build["slug"]}.html">Build it yourself</a>' if build else ""}
         <a class="button ghost" href="{e(p["repo_url"])}">Repository</a>
@@ -460,7 +477,7 @@ def project_summary(p, pg):
   <div class="project-body">
     <article class="prose">{pg["html"]}</article>
     <aside>
-      <section class="panel facts mono">
+      <section class="panel facts">
         <div><span>Updated</span><b>{e(p["updated"])}</b></div>
         <div><span>Parts</span><b>{p["parts_count"]} line items</b></div>
         <div><span>Est. cost</span><b>{cost}</b></div>
@@ -486,7 +503,7 @@ def project_doc(p, pg):
     toc = "".join(f'<li><a href="#{i}">{re.sub(r"<[^>]+>", "", t)}</a></li>' for i, t in outline)
     return page(f"{pg['title']} · {p['name']} · DooM", f"""
 <main class="project">
-  <p class="crumbs mono"><a href="../../index.html#projects">Projects</a> / <a href="index.html">{e(p["slug"])}</a> / {e(pg["slug"])}</p>
+  <p class="crumbs"><a href="../../index.html#projects">Projects</a> / <a href="index.html">{e(p["slug"])}</a> / {e(pg["slug"])}</p>
   <div class="project-head compact">
     <div>
       {f'<span class="chip">{e(p["status"])}</span>' if p["status"] else ""}
@@ -514,9 +531,9 @@ def shrink_page():
   aren't touched, and nothing is uploaded: it all happens on your phone.</p>
 
   <ol class="steps">
-    <li><b>Pick photos.</b> As many as you like.</li>
-    <li><b>Save the small copies.</b> They go to your camera roll next to the originals.</li>
-    <li><b>Upload those</b> to your project in Pages CMS, under Media.</li>
+    <li><span><b>Pick photos.</b> As many as you like.</span></li>
+    <li><span><b>Save the small copies.</b> They go to your camera roll next to the originals.</span></li>
+    <li><span><b>Upload those</b> to your project in Pages CMS, under Media.</span></li>
   </ol>
 
   <div class="picker">
