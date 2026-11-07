@@ -9,6 +9,7 @@ Output goes to site/. Standard library only. Set GITHUB_TOKEN to lift the API
 rate limit from 60 to 5,000 requests an hour (Actions provides one for free).
 """
 import csv
+import hashlib
 import html
 import io
 import json
@@ -369,6 +370,13 @@ THEME_BUTTON = """<button class="theme-toggle" type="button" aria-label="Switch 
     </button>"""
 
 
+def asset_version(name):
+    """A short hash of an asset's contents, added to its link as ?v=... GitHub Pages
+    lets browsers reuse CSS and JS for 10 minutes, so without it a new page can load
+    with the old stylesheet; with it, a changed file gets a new URL."""
+    return hashlib.sha256((ROOT / "assets" / name).read_bytes()).hexdigest()[:10]
+
+
 def page(title, body, depth=0, description=""):
     up = "../" * depth
     script = MERMAID if 'class="mermaid"' in body else ""
@@ -383,7 +391,7 @@ def page(title, body, depth=0, description=""):
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;1,400&family=Montserrat:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="{up}assets/style.css">
+<link rel="stylesheet" href="{up}assets/style.css?v={asset_version('style.css')}">
 </head>
 <body>
 <header class="topbar">
@@ -404,7 +412,7 @@ def page(title, body, depth=0, description=""):
     <p class="mono">Built {datetime.now():%Y-%m-%d} from <a href="https://github.com/{ORG}">github.com/{ORG}</a></p>
   </div>
 </footer>
-<script src="{up}assets/theme.js"></script>
+<script src="{up}assets/theme.js?v={asset_version('theme.js')}"></script>
 {script}
 </body>
 </html>
@@ -575,7 +583,7 @@ def shrink_page():
 
   <p class="muted small">Photos come out as JPEGs, with location and camera details removed.</p>
 </main>
-<script src="../assets/shrink.js"></script>
+<script src="../assets/shrink.js?v=""" + asset_version("shrink.js") + """"></script>
 """, depth=1, description="Shrink phone photos before uploading them to a DooM project.")
 
 
