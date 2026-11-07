@@ -343,13 +343,30 @@ def is_project(repo):
 
 MERMAID = """<script type="module">
 import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.esm.min.mjs';
-const dark = matchMedia('(prefers-color-scheme: dark)').matches;
-mermaid.initialize({ startOnLoad: true, theme: 'base', themeVariables: {
-  fontFamily: 'Montserrat, sans-serif',
-  primaryColor: dark ? '#162829' : '#EEECE7', primaryTextColor: dark ? '#E8E3DA' : '#0F4C4F',
-  primaryBorderColor: dark ? '#8CC3BF' : '#0F4C4F', lineColor: dark ? '#E08A62' : '#B5552F',
-  secondaryColor: dark ? '#1D3334' : '#E6E3DC', tertiaryColor: dark ? '#0F1D1E' : '#F4F2EE' } });
+const nodes = [...document.querySelectorAll('pre.mermaid')];
+const sources = nodes.map(n => n.textContent);
+async function draw() {
+  const dark = window.doomTheme ? window.doomTheme() === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
+  mermaid.initialize({ startOnLoad: false, theme: 'base', themeVariables: {
+    fontFamily: 'Montserrat, sans-serif',
+    primaryColor: dark ? '#162829' : '#EEECE7', primaryTextColor: dark ? '#E8E3DA' : '#0F4C4F',
+    primaryBorderColor: dark ? '#8CC3BF' : '#0F4C4F', lineColor: dark ? '#E08A62' : '#B5552F',
+    secondaryColor: dark ? '#1D3334' : '#E6E3DC', tertiaryColor: dark ? '#0F1D1E' : '#F4F2EE' } });
+  nodes.forEach((n, i) => { n.removeAttribute('data-processed'); n.textContent = sources[i]; });
+  await mermaid.run({ nodes });
+}
+draw();
+document.addEventListener('themechange', draw);
 </script>"""
+
+# Set the saved theme before the page paints, so a dark-mode choice doesn't flash light.
+THEME_EARLY = ("<script>try{var t=localStorage.getItem('doom-theme');"
+               "if(t==='light'||t==='dark')document.documentElement.dataset.theme=t}catch(e){}</script>")
+
+THEME_BUTTON = """<button class="theme-toggle" type="button" aria-label="Switch to dark mode">
+      <svg class="moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5Z"/></svg>
+      <svg class="sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+    </button>"""
 
 
 def page(title, body, depth=0, description=""):
@@ -362,6 +379,7 @@ def page(title, body, depth=0, description=""):
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{html.escape(title)}</title>
 <meta name="description" content="{html.escape(description)}">
+{THEME_EARLY}
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;1,400&family=Montserrat:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -371,6 +389,7 @@ def page(title, body, depth=0, description=""):
 <header class="topbar">
   <a class="wordmark" href="{up}index.html" aria-label="DooM: Department of Makers, home">Department <i>of</i> <b>Makers</b></a>
   <nav>
+    {THEME_BUTTON}
     <a href="{up}index.html#projects">Projects</a>
     <a href="{up}guide/index.html">Guide</a>
     <a href="{up}shrink/index.html">Shrink photos</a>
@@ -385,6 +404,7 @@ def page(title, body, depth=0, description=""):
     <p class="mono">Built {datetime.now():%Y-%m-%d} from <a href="https://github.com/{ORG}">github.com/{ORG}</a></p>
   </div>
 </footer>
+<script src="{up}assets/theme.js"></script>
 {script}
 </body>
 </html>
