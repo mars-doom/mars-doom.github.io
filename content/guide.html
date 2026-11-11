@@ -29,6 +29,38 @@
       <p><b>Done looks like:</b> a photo and a few sentences, a log with a start and an end,
       a diagram with a parts list, and the main steps to build one.</p>
 
+      <h2 id="new-project">Start a new project</h2>
+      <p>Every project starts as a copy of the
+      <a href="https://github.com/mars-doom/doom-template">doom-template</a> repo, which already has
+      the four pages, the parts list and the website set up. Skip this if your repo already exists.</p>
+      <div class="markdown-alert markdown-alert-tip"><p class="markdown-alert-title">The easy way</p>
+      <p>You can also just ask Tyler to make a new repo for you. Send the project name and your
+      GitHub username, then skip to <a href="#phone">On your phone</a>.</p></div>
+
+      <h3 id="create-repo">Make the repo</h3>
+      <ol>
+        <li>Sign in to GitHub and open <a href="https://github.com/mars-doom/doom-template">github.com/mars-doom/doom-template</a>.</li>
+        <li>Click <b>Use this template → Create a new repository</b>.</li>
+        <li><b>Owner:</b> pick <b>mars-doom</b>. If it isn't in the list, you don't have permission to
+        make repos there yet: ask Tyler.</li>
+        <li><b>Repository name:</b> short, lowercase, words joined with dashes, like <code style="white-space: nowrap">shower-pods</code>.
+        This becomes your web address.</li>
+        <li>Choose <b>Public</b> (private projects don't show on the hub), then <b>Create repository</b>.</li>
+      </ol>
+
+      <h3 id="setup-repo">Set it up (once, about 10 minutes)</h3>
+      <ol>
+        <li><b>Turn on the website.</b> In your new repo: <b>Settings → Pages</b>, and under Source pick <b>GitHub Actions</b>.</li>
+        <li><b>Fill in your details.</b> In <code>mkdocs.yml</code> and <code>README.md</code>, replace
+        <code>PROJECT NAME</code>, <code>YOUR NAME</code>, <code>ORG-NAME</code> (with <code>mars-doom</code>)
+        and <code>REPO-NAME</code> (with your repo's name). You can edit both right on GitHub with the pencil button.</li>
+        <li><b>Tag it.</b> On the repo's main page, click the gear next to <b>About</b>, add the topics
+        <code>mars-college</code>, <code>dept-of-makers</code> and <code>mars-2027</code>, and paste in your
+        website link: <code>https://mars-doom.github.io/your-repo-name/</code>.</li>
+      </ol>
+      <p>Your site appears at that link a few minutes later, and your card shows up on the hub the next
+      time it refreshes (every night). From here on you can do everything from your phone.</p>
+
       <h2 id="phone">1. On your phone: Pages CMS</h2>
       <p>Pages CMS is a website that edits your repo like a normal app: typing, photos, Save.
       No installs, no Git.</p>
@@ -220,6 +252,7 @@ The site is built with MkDocs; parts.csv feeds the parts list.</code></pre></li>
         <h2>On this page</h2>
         <ul>
           <li><a href="#how-it-fits">How it fits together</a></li>
+          <li><a href="#new-project">Start a new project</a></li>
           <li><a href="#phone">1. On your phone</a></li>
           <li><a href="#photos">2. Photos</a></li>
           <li><a href="#videos">3. Videos</a></li>
