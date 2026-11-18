@@ -127,12 +127,15 @@ section, .project { max-width: var(--wide); margin: 0 auto; padding: 0 1rem; }
   font: 400 clamp(3rem, 10vw, 6.5rem)/0.95 var(--font-display); color: var(--teal);
 }
 .display .numeral {
-  position: absolute; z-index: -1; left: 0.6em; top: 52%; transform: translateY(-50%);
-  font-size: 3.4em; line-height: 1; color: var(--clay); opacity: 0.85;
+  /* Anchored to the bottom of the title, so it grows upward behind "the" (as the
+     poster's "10" does) and never hangs into the text below, whatever the digit. */
+  position: absolute; z-index: -1; left: 0.6em; bottom: -0.18em;
+  font-size: 2.7em; line-height: 1; color: var(--clay); opacity: 0.85;
+  font-variant-numeric: lining-nums;   /* Playfair's default old-style 3/4/5/7/9 drop below the line */
 }
 .display small { display: block; font-size: 0.5em; line-height: 1; margin-bottom: 0.08em; }
 .lede { font-size: 1.1rem; max-width: var(--measure); color: var(--text); }
-.hero .lede { margin: clamp(3rem, 8vw, 5rem) 0 0; }
+.hero .lede { margin: 2.5rem 0 0; }
 .stats { display: flex; flex-wrap: wrap; gap: 0.5rem 2.5rem; margin-top: 1.75rem; color: var(--muted); }
 .stats b { font: 400 2rem/1 var(--font-display); color: var(--rust); letter-spacing: 0; margin-right: 0.4rem; vertical-align: -0.15em; }
 
